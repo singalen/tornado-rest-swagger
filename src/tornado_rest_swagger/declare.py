@@ -9,6 +9,9 @@ import epydoc.markup
 __author__ = 'flier'
 
 
+TRAILING_SLASH_MATTERS = False
+
+
 class rest_api(object):
     def __init__(self, func_or_name, summary=None, notes=None, responseClass=None, errors=None, **kwds):
         self.summary = summary
@@ -25,6 +28,10 @@ class rest_api(object):
         elif isinstance(func_or_name, basestring):
             self.func = None
             self.name = func_or_name
+        #elif isinstance(func_or_name, RequestHandler):
+        #    methods = [method for method in {'get', 'put', 'delete', 'post'}.intersection(dir(object)) if callable(getattr(object, method))]
+        #    for m in methods:
+        #        dummy = rest_api(m)
 
     def __bind__(self, func):
         self.func = func
@@ -43,7 +50,7 @@ class rest_api(object):
             'dataType': 'string'
         }) for arg in self.func_args])
 
-        doc = self.parse_docstring(inspect.getdoc(self.func))
+        doc = self.parse_docstring(inspect.getdoc(self.func) or '')
 
         if self.summary is None:
             self.summary = inspect.getcomments(self.func) or doc.to_plaintext(None).split('\n')[0].strip()
@@ -117,8 +124,10 @@ def discover_rest_apis(host_handlers):
     for host, handlers in host_handlers:
         for spec in handlers:
             for (name, member) in inspect.getmembers(spec.handler_class):
-                if inspect.ismethod(member) and hasattr(member, 'rest_api'):
-                    yield spec._path % tuple(['{%s}' % arg for arg in member.rest_api.func_args]), inspect.getdoc(spec.handler_class)
+                if callable(member) and hasattr(member, 'rest_api'):
+                    # FIXME: Commented out due to crash.
+                    #yield spec._path % tuple(['{%s}' % arg for arg in member.rest_api.func_args]), inspect.getdoc(spec.handler_class)
+                    yield spec._path, inspect.getdoc(spec.handler_class)
 
                     break
 
@@ -127,9 +136,15 @@ def find_rest_api(host_handlers, path):
     for host, handlers in host_handlers:
         for spec in handlers:
             for (name, member) in inspect.getmembers(spec.handler_class):
-                if inspect.ismethod(member) and hasattr(member, 'rest_api'):
-                    spec_path = spec._path % tuple(['{%s}' % arg for arg in member.rest_api.func_args])
+                if callable(member) and hasattr(member, 'rest_api'):
+                    # FIXME: Commented out due to crash.
+                    spec_path = spec._path #% tuple(['{%s}' % arg for arg in member.rest_api.func_args])
 
+                    if not TRAILING_SLASH_MATTERS and path and path[-1] == '/':
+                        path = path[:-1]
+
+                    # TODO: tornado.Application.__call__() matches requests in a different way.
+                    # Looks like we need to rework this, starting with urls.handle_apidoc_urls().
                     if path == spec_path[1:]:
                         operations = [member.rest_api for (name, member) in inspect.getmembers(spec.handler_class) if hasattr(member, 'rest_api')]
 
