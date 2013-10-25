@@ -1,0 +1,41 @@
+
+Installing
+----------
+
+1. ??? Install Swagger-UI libraries into /assets/lib/
+2. If you're initializing your Tornado application like
+
+    class MyApplication(tornado.web.Application):
+        def __init__(self):
+            handlers = [
+                (r'/user/', UserHandler),
+                ...
+            ]
+            settings = dict(debug="True")
+            tornado.web.Application.__init__(self, handlers, **settings)
+
+then add Swagger handlers like
+
+    swagger_handlers = tornado_rest_swagger.urls.handle_apidoc_urls(r'/swagger', **settings)
+    tornado.web.Application.__init__(self, handlers + swagger_handlers, **settings)
+
+Documenting API methods
+-----------------------
+
+Write a docstrting in [epytext](http://epydoc.sourceforge.net/epytext.html) format like:
+
+    """
+    Updates a user.
+
+    @param self: this object
+    @type self: UserHandler or None
+    @rtype: User JSON
+
+    """
+Full tag list is:
+* @sparam <name>: <description> (with paramType subtag, defaults to 'query') (TODO: what's the syntax?)
+* @type <name>: <dataType>
+* @rtype <return type>
+* @raise <error code>: <error reason>
+* @note: <note>
+* @summmary: <summary>
