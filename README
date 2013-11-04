@@ -33,7 +33,7 @@ Write a docstrting in [epytext](http://epydoc.sourceforge.net/epytext.html) form
 
     """
 Full tag list is:
-* @sparam <name>: <description> (with paramType subtag, defaults to 'query') (TODO: what's the syntax?)
+* @param <name>: <description> (with paramType subtag, defaults to 'query') (TODO: what's the syntax?)
 * @type <name>: <dataType>
 * @rtype <return type>
 * @raise <error code>: <error reason>
