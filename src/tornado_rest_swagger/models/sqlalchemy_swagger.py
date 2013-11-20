@@ -62,9 +62,14 @@ class SqlAlchemyModelReader(object):
 
         many_to_ones = {name: field for name, field in many_to_ones.items() if field['column'] not in table_columns}
 
+        all_properties = dict(fields.items() + one_to_manies.items() + many_to_ones.items())
+        for k, v in all_properties.items():
+            if 'column' in v:
+                del v['column']
+
         return {
             'id': clazz.__name__,
             'description': (clazz.__doc__ or '').strip(),
-            'properties': dict(fields.items() + one_to_manies.items() + many_to_ones.items()),
+            'properties': all_properties,
             'required': required_cols
         }

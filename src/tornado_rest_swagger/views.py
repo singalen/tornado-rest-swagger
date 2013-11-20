@@ -7,6 +7,7 @@ import json
 import tornado.web
 import tornado.template
 import tornado_rest_swagger.models.plain_swagger
+import tornado_rest_swagger.models.sqlalchemy_swagger
 
 from tornado_rest_swagger.settings import SWAGGER_VERSION, URL_SWAGGER_API_LIST
 from tornado_rest_swagger.declare import discover_rest_apis, find_rest_api
@@ -74,9 +75,9 @@ class SwaggerApiHandler(tornado.web.RequestHandler):
         self.base_url = base_url
 
     def get_structure_reader(self, clazz):
-        if 'SQLAlchemyModelBase' in [n.__name__ for n in inspect.getmro(clazz)]:
-            return tornado_rest_swagger.models.sqlalchemy.SqlAlchemyModelReader()
-        return tornado_rest_swagger.models.plain.PlainModelReader()
+        if any(n.__module__.startswith('sqlalchemy') for n in inspect.getmro(clazz)):
+            return tornado_rest_swagger.models.sqlalchemy_swagger.SqlAlchemyModelReader()
+        return tornado_rest_swagger.models.plain_swagger.PlainModelReader()
 
     def read_class_structure(self, class_name):
         clazz = self.get_class(class_name)
