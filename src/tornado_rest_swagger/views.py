@@ -1,10 +1,12 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+import inspect
 import urlparse
 import json
 
 import tornado.web
 import tornado.template
+import tornado_rest_swagger.models.plain_swagger
 
 from tornado_rest_swagger.settings import SWAGGER_VERSION, URL_SWAGGER_API_LIST
 from tornado_rest_swagger.declare import discover_rest_apis, find_rest_api
@@ -71,6 +73,15 @@ class SwaggerApiHandler(tornado.web.RequestHandler):
         self.api_version = api_version
         self.base_url = base_url
 
+    def get_structure_reader(self, clazz):
+        if 'SQLAlchemyModelBase' in [n.__name__ for n in inspect.getmro(clazz)]:
+            return tornado_rest_swagger.models.sqlalchemy.SqlAlchemyModelReader()
+        return tornado_rest_swagger.models.plain.PlainModelReader()
+
+    def read_class_structure(self, class_name):
+        clazz = self.get_class(class_name)
+        return self.get_structure_reader(clazz).read(clazz)
+
     def get(self, path):
         result = find_rest_api(self.application.handlers, path)
 
@@ -80,6 +91,8 @@ class SwaggerApiHandler(tornado.web.RequestHandler):
         spec, apis = result
 
         u = urlparse.urlparse(self.request.full_url())
+
+        response_classes = set([api.responseClass for api in apis]) - {None, 'str', 'unicode', 'int'}
 
         spec = {
             'apiVersion': self.api_version,
@@ -97,9 +110,19 @@ class SwaggerApiHandler(tornado.web.RequestHandler):
                     'responseClass': api.responseClass,
                     'errorResponses': api.errors,
                 } for api in apis]
-            }]
+            }],
+            'models': {c: self.read_class_structure(c) for c in response_classes}
         }
 
         self.set_header('content-type', 'application/json')
 
         self.finish(json_dumps(spec, self.get_arguments('pretty')))
+
+    @staticmethod
+    def get_class(clazz):
+        parts = clazz.split('.')
+        module = ".".join(parts[:-1])
+        m = __import__(module)
+        for comp in parts[1:]:
+            m = getattr(m, comp)
+        return m
