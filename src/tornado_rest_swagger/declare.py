@@ -28,7 +28,7 @@ class rest_api(object):
         elif isinstance(func_or_name, basestring):
             self.func = None
             self.name = func_or_name
-        #elif isinstance(func_or_name, RequestHandler):
+        #elif isinstance(func_or_name, RequestHandler): TODO: implement @rest_api for RequestHandler classes.
         #    methods = [method for method in {'get', 'put', 'delete', 'post'}.intersection(dir(object)) if callable(getattr(object, method))]
         #    for m in methods:
         #        dummy = rest_api(m)
@@ -43,12 +43,17 @@ class rest_api(object):
         if len(self.func_args) > 0 and self.func_args[0] == 'self':
             self.func_args = self.func_args[1:]
 
-        self.params = dict([(arg, {
-            'name': arg,
-            'required': True,
-            'paramType': 'path',
-            'dataType': 'string'
-        }) for arg in self.func_args])
+        self.params = {
+            arg: {
+                'name': arg,
+                'required': True,
+                'paramType': 'path',
+                'dataType': 'string'
+            }
+            for arg in self.func_args
+        }
+
+        self.raises = dict()
 
         doc = self.parse_docstring(inspect.getdoc(self.func) or '')
 
@@ -100,21 +105,28 @@ class rest_api(object):
 
                 if 'paramType' not in self.params[arg]:
                     self.params[arg]['paramType'] = 'query'
-            elif field.tag() == 'type':
+            elif tag == 'type':
                 self.params.setdefault(arg, {}).update({
                     'name': arg,
                     'dataType': body
                 })
-            elif field.tag() == 'rtype':
+            elif tag == 'paramtype':
+                self.params.setdefault(arg, {}).update({
+                    'paramType': body,
+                })
+            elif tag == 'rtype':
                 self.responseClass = arg
-            elif field.tag() == 'raise':
+            elif tag == 'raisetype':
+                self.raises[arg] = body
+            elif tag == 'raise':
                 self.errors.append({
                     'code': arg,
-                    'reason': body
+                    'message': body,
+                    'responseModel': self.raises[arg] if arg in self.raises else '',
                 })
-            elif field.tag() == 'note':
+            elif tag == 'note':
                 self.notes = body
-            elif field.tag() == 'summary':
+            elif tag == 'summary':
                 self.summary = body
 
         return doc

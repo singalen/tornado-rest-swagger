@@ -27,15 +27,19 @@ Write a docstrting in [epytext](http://epydoc.sourceforge.net/epytext.html) form
     """
     Updates a user.
 
-    @param self: this object
-    @type self: UserHandler or None
-    @rtype: User JSON
+    @type user: my.package.models.UserModel
+    @param user: The user JSON to be updated
+    @rtype: my.package.models.UserModel
 
     """
 Full tag list is:
-* @param <name>: <description> (with paramType subtag, defaults to 'query') (TODO: what's the syntax?)
-* @type <name>: <dataType>
+* @paramtype <name>: <http-parameter-type> (defaults to 'path', I can think of 'body' and 'header'; might be arbitrary string)
+* @type <name>: <dataType> (where dataType is a FQN like my.package.models.DeviceModel or a str/int/bool)
+* @param <name>: <description>
+    bug: @type and @paramtype should go BEFORE a @param.
 * @rtype <return type>
+* @raisetype <error code>: <return type with the given code> (Apparently not supported by swagger-ui yet)
 * @raise <error code>: <error reason>
+    bug: @raisetype should go BEFORE a @raise.
 * @note: <note>
 * @summary: <summary>
