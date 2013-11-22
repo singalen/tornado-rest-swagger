@@ -80,8 +80,13 @@ class SwaggerApiHandler(tornado.web.RequestHandler):
         return tornado_rest_swagger.models.plain_swagger.PlainModelReader()
 
     def read_class_structure(self, class_name):
-        clazz = self.get_class(class_name)
-        return self.get_structure_reader(clazz).read(clazz)
+        try:
+            clazz = self.get_class(class_name)
+        except ValueError:
+            return dict()
+
+        descriptor = self.get_structure_reader(clazz).read(clazz)
+        return descriptor
 
     def get(self, path):
         result = find_rest_api(self.application.handlers, path)

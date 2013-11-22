@@ -33,13 +33,23 @@ Write a docstrting in [epytext](http://epydoc.sourceforge.net/epytext.html) form
 
     """
 Full tag list is:
-* @paramtype <name>: <http-parameter-type> (defaults to 'path', I can think of 'body' and 'header'; might be arbitrary string)
+* @paramtype <name>: <http-parameter-type> (convention: defaults to 'path', could be 'query'. I can also think of 'body' and 'header'; might be arbitrary string).
 * @type <name>: <dataType> (where dataType is a FQN like my.package.models.DeviceModel or a str/int/bool)
 * @param <name>: <description>
-    bug: @type and @paramtype should go BEFORE a @param.
+    bug: @type and @paramtype must go BEFORE a @param.
 * @rtype <return type>
 * @raisetype <error code>: <return type with the given code> (Apparently not supported by swagger-ui yet)
 * @raise <error code>: <error reason>
-    bug: @raisetype should go BEFORE a @raise.
+    bug: @raisetype must go BEFORE a @raise.
+    note: @return is a synonym of @raise for now.
 * @note: <note>
 * @summary: <summary>
+
+bug: Each tag can have an argument and a body:
+    @raise <argument>: <body>.
+If a tag has no body, it still must have a semicolon ':', otherwise it won't be seen by Swagger. Like:
+    @raise 200:
+
+Missing: there's no way to describe an array of anything as a return type.
+
+TODO: in-place model declaration for @type/@rtype

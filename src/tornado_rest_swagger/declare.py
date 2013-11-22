@@ -58,7 +58,7 @@ class rest_api(object):
         doc = self.parse_docstring(inspect.getdoc(self.func) or '')
 
         if self.summary is None:
-            self.summary = inspect.getcomments(self.func) or doc.to_plaintext(None).split('\n')[0].strip()
+            self.summary = doc.summary()[0].to_plaintext(None)
 
         if self.summary:
             self.summary = self.summary.strip()
@@ -66,6 +66,8 @@ class rest_api(object):
         if self.notes is None:
             self.notes = doc.to_plaintext(None)
 
+        # TODO: There's apparently no way to get ALL the epydoc EXCEPT for a fields list.
+        # So currently notes hold some garbage.
         if self.notes:
             self.notes = self.notes.strip()
 
@@ -115,7 +117,7 @@ class rest_api(object):
                     'paramType': body,
                 })
             elif tag == 'rtype':
-                self.responseClass = arg
+                self.responseClass = arg or body
             elif tag == 'raisetype':
                 self.raises[arg] = body
             elif tag == 'raise':
@@ -125,9 +127,9 @@ class rest_api(object):
                     'responseModel': self.raises[arg] if arg in self.raises else '',
                 })
             elif tag == 'note':
-                self.notes = body
+                self.notes = body or arg
             elif tag == 'summary':
-                self.summary = body
+                self.summary = body or arg
 
         return doc
 
