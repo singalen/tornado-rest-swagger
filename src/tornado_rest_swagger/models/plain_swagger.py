@@ -13,18 +13,18 @@ class PlainModelReader(object):
     def read(clazz):
         obj = clazz()
 
-        members = {
-            attr: {
+        members = dict([
+            (attr, {
                 "type": type_name(type(getattr(obj, attr))),
                 #"$ref": "Category", - TODO
                 #"format": "int64",
                 #"description": "Unique identifier for the Pet",
                 #"minimum": "0.0",
                 #"maximum": "100.0"
-            }
+            })
             for attr in dir(obj)
             if not callable(attr) and not attr.startswith("__")
-        }
+        ])
 
         return {
             'id': clazz.__name__,

@@ -22,8 +22,8 @@ class SqlAlchemyModelReader(object):
     def read(clazz):
         required_cols = []
 
-        fields = {
-            name: {
+        fields = dict([
+            (name, {
                 "type": _attr_type(attr),
                 #"format": "int64",
                 'description': '',
@@ -31,23 +31,24 @@ class SqlAlchemyModelReader(object):
                 #"maximum": "100.0"
                 'required': hasattr(attr.property.columns[0], 'required'),
                 'column': iter(attr.property.columns).next().expression,
-            }
+            })
             for name, attr in dict(clazz.__dict__).items()
             if hasattr(attr, 'is_attribute') and attr.is_attribute and hasattr(attr.property, 'columns')
-        }
+        ])
 
-        one_to_manies = {
-            name: {
+        one_to_manies = dict([
+            (name, {
                 'type': 'array',
                 'items': {'$ref': attr.property.mapper.class_.__name__}
-            }
+            })
             for name, attr in clazz.__dict__.items()
-            if name != 'metalist' and hasattr(attr, 'property') and hasattr(attr.property, 'target') and 'ONETOMANY' in str(attr.property.direction)
-        }
+            if name != 'metalist' and hasattr(attr, 'property') \
+                and hasattr(attr.property, 'target') \
+                and 'ONETOMANY' in str(attr.property.direction)])
 
         table_columns = [field['column'] for name, field in fields.items()]
-        many_to_ones = {
-            name: {
+        many_to_ones = dict([
+            (name, {
                 "$ref": attr.property.mapper.class_.__name__,
                 #"format": "int64",
                 'description': '',
@@ -55,12 +56,12 @@ class SqlAlchemyModelReader(object):
                 #"maximum": "100.0"
                 #'required': attr._orig_columns[0].required TODO:
                 'column': iter(attr.property.local_columns).next().expression,
-            }
+            })
             for name, attr in clazz.__dict__.items()
             if hasattr(attr, 'property') and hasattr(attr.property, 'target') and 'MANYTOONE' in str(attr.property.direction)
-        }
+        ])
 
-        many_to_ones = {name: field for name, field in many_to_ones.items() if field['column'] not in table_columns}
+        many_to_ones = dict([(name, field) for name, field in many_to_ones.items() if field['column'] not in table_columns])
 
         all_properties = dict(fields.items() + one_to_manies.items() + many_to_ones.items())
         for k, v in all_properties.items():

@@ -43,15 +43,15 @@ class rest_api(object):
         if len(self.func_args) > 0 and self.func_args[0] == 'self':
             self.func_args = self.func_args[1:]
 
-        self.params = {
-            arg: {
+        self.params = dict([
+            (arg, {
                 'name': arg,
                 'required': True,
                 'paramType': 'path',
                 'dataType': 'string'
-            }
+            })
             for arg in self.func_args
-        }
+        ])
 
         self.raises = dict()
 

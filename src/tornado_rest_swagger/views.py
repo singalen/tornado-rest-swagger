@@ -98,7 +98,7 @@ class SwaggerApiHandler(tornado.web.RequestHandler):
 
         u = urlparse.urlparse(self.request.full_url())
 
-        response_classes = set([api.responseClass for api in apis]) - {None, 'str', 'unicode', 'int'}
+        response_classes = set([api.responseClass for api in apis]) - set([None, 'str', 'unicode', 'int'])
 
         spec = {
             'apiVersion': self.api_version,
@@ -117,7 +117,7 @@ class SwaggerApiHandler(tornado.web.RequestHandler):
                     'errorResponses': api.errors,
                 } for api in apis]
             }],
-            'models': {c: self.read_class_structure(c) for c in response_classes}
+            'models': dict([(c, self.read_class_structure(c)) for c in response_classes])
         }
 
         self.set_header('content-type', 'application/json')
