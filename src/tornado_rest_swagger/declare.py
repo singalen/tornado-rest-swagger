@@ -1,15 +1,11 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 import inspect
-
+import re
 from functools import wraps
-
 import epydoc.markup
 
 __author__ = 'flier'
-
-
-TRAILING_SLASH_MATTERS = False
 
 
 class rest_api(object):
@@ -134,6 +130,14 @@ class rest_api(object):
         return doc
 
 
+def __spec_path_regex_to_path(path_regex):
+    """
+    The smallest thing that could possibly work.
+    """
+    # path = path_regex.replace('%s', 'SOMETHING')
+    return re.sub('.\?', '', path_regex)
+
+
 def discover_rest_apis(host_handlers):
     for host, handlers in host_handlers:
         for spec in handlers:
@@ -141,7 +145,7 @@ def discover_rest_apis(host_handlers):
                 if callable(member) and hasattr(member, 'rest_api'):
                     # FIXME: Commented out due to crash.
                     #yield spec._path % tuple(['{%s}' % arg for arg in member.rest_api.func_args]), inspect.getdoc(spec.handler_class)
-                    yield spec._path, inspect.getdoc(spec.handler_class)
+                    yield __spec_path_regex_to_path(spec._path), inspect.getdoc(spec.handler_class)
 
                     break
 
@@ -154,12 +158,9 @@ def find_rest_api(host_handlers, path):
                     # FIXME: Commented out due to crash.
                     spec_path = spec._path #% tuple(['{%s}' % arg for arg in member.rest_api.func_args])
 
-                    if not TRAILING_SLASH_MATTERS and path and path[-1] == '/':
-                        path = path[:-1]
-
                     # TODO: tornado.Application.__call__() matches requests in a different way.
                     # Looks like we need to rework this, starting with urls.handle_apidoc_urls().
-                    if path == spec_path[1:]:
+                    if re.match(spec_path[1:], path):
                         operations = [member.rest_api for (name, member) in inspect.getmembers(spec.handler_class) if hasattr(member, 'rest_api')]
 
                         return spec, operations
