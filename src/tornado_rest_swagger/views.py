@@ -1,6 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 import inspect
+import logging
 import urlparse
 import json
 
@@ -128,7 +129,11 @@ class SwaggerApiHandler(tornado.web.RequestHandler):
     def get_class(clazz):
         parts = clazz.split('.')
         module = ".".join(parts[:-1])
-        m = __import__(module)
+        try:
+            m = __import__(module)
+        except ImportError as e:
+            logging.getLogger(__name__).error(e.message)
+            raise ValueError(e.message)
         for comp in parts[1:]:
             m = getattr(m, comp)
         return m
