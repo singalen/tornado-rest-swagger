@@ -132,7 +132,7 @@ class SwaggerApiHandler(tornado.web.RequestHandler):
         try:
             m = __import__(module)
         except ImportError as e:
-            logging.getLogger(__name__).error(e.message)
+            logging.getLogger(__name__).error("Error loading REST type named {}: {}".format(clazz, e.message))
             raise ValueError(e.message)
         for comp in parts[1:]:
             m = getattr(m, comp)
